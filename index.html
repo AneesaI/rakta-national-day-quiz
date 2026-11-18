@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAKTA | روح الاتحاد</title>
+<style>
+:root{--navy:#102f49;--blue:#174c70;--gold:#d6b15e;--green:#18794e;--bg:#f3f6f8;--ink:#173247;--muted:#6b7d89;--white:#fff;--red:#b83b3b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:linear-gradient(120deg,#0d2b43,#1d5577);color:white;padding:24px 18px;text-align:center;border-bottom:5px solid var(--gold)}
+.flag{font-size:30px}h1{margin:8px 0 4px;font-size:clamp(25px,5vw,38px)}header p{margin:0;color:#e6edf2}
+main{max-width:900px;margin:22px auto;padding:0 14px}.panel{background:white;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 5px 22px #15354a12}
+h2{margin:0 0 14px;color:var(--navy)}label{display:block;font-weight:bold;margin:12px 0 6px}
+input,button{font:inherit}input{width:100%;padding:13px;border:1px solid #ccd7df;border-radius:10px;font-size:16px}
+button{border:0;border-radius:11px;padding:13px 18px;background:var(--blue);color:white;font-weight:bold;cursor:pointer}
+button.gold{background:var(--gold);color:#172d3d}button.light{background:#e8eff4;color:var(--navy)}button:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+.hidden{display:none!important}.muted{color:var(--muted)}.pill{display:inline-block;padding:6px 10px;border-radius:30px;background:#eaf1f5;color:var(--blue);font-size:13px}
+.question{font-size:clamp(20px,4vw,28px);line-height:1.6;font-weight:bold;margin:10px 0 18px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}.answer{background:#edf3f6;color:var(--ink);border:2px solid transparent;text-align:right;min-height:64px}.answer.selected{border-color:var(--gold);background:#fff8e7}
+.timer{font-size:28px;font-weight:bold;color:var(--green)}.bar{height:9px;background:#e5ebef;border-radius:20px;overflow:hidden;margin:10px 0}.bar>i{display:block;height:100%;width:0;background:var(--gold);transition:width .3s}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #e7edf1;text-align:right}th{color:var(--muted);font-size:13px}
+.rank{font-weight:bold;color:var(--blue)}.notice{padding:12px;border-radius:10px;background:#fff8e7;color:#70551a;line-height:1.7}
+footer{text-align:center;color:var(--muted);padding:22px;font-size:12px}
+@media(max-width:560px){.answers{grid-template-columns:1fr}.panel{padding:16px}.row button{width:100%}}
+</style>
+</head>
+<body>
+<header><div class="flag">🇦🇪</div><h1>روح الاتحاد</h1><p>RAKTA National Day Challenge</p></header>
+<main>
+  <section id="setup" class="panel">
+    <h2>مرحباً بكم في تحدي روح الاتحاد</h2>
+    <p class="muted">شاركوا في المسابقة الوطنية وتنافسوا على المراكز الثلاثة الأولى.</p>
+    <div class="notice">هذه نسخة تشغيل تحتاج ربطها بمشروع Firebase الخاص بالهيئة قبل استخدامها مع عدة هواتف.</div>
+    <label for="playerName">اسم المشارك</label><input id="playerName" maxlength="35" placeholder="اكتب اسمك">
+    <button id="joinBtn" style="width:100%;margin-top:14px">دخول المسابقة</button>
+    <p id="joinMsg" class="muted"></p>
+  </section>
+
+  <section id="waiting" class="panel hidden">
+    <h2>أهلاً بك! 🎉</h2><p id="welcome"></p>
+    <div class="notice">تم تسجيل دخولك. انتظر ظهور السؤال على الشاشة، وسيظهر هنا تلقائياً.</div>
+    <p class="muted">لا تغلق الصفحة أثناء المسابقة.</p>
+  </section>
+
+  <section id="play" class="panel hidden">
+    <div class="row" style="align-items:center"><span class="pill" id="qCount">السؤال</span><span class="timer" id="playerTimer">--</span></div>
+    <div class="bar"><i id="playerBar"></i></div>
+    <div class="question" id="playerQuestion"></div>
+    <div class="answers" id="playerAnswers"></div>
+    <p id="answerMsg" class="muted"></p>
+  </section>
+
+  <section id="hostLogin" class="panel hidden">
+    <h2>لوحة تحكم المنظم</h2>
+    <label for="hostPin">رمز المنظم</label><input id="hostPin" type="password" placeholder="رمز المنظم">
+    <button id="hostLoginBtn" style="margin-top:12px">دخول</button><p id="hostMsg" class="muted"></p>
+  </section>
+
+  <section id="host" class="hidden">
+    <div class="panel">
+      <div class="row" style="align-items:center"><h2>لوحة المنظم</h2><span class="pill" id="playersCount">0 مشارك</span></div>
+      <div class="row">
+        <button id="startBtn" class="gold">بدء المسابقة / السؤال التالي</button>
+        <button id="revealBtn" class="light">إنهاء السؤال وإظهار الإجابة</button>
+      </div>
+      <button id="resetBtn" class="light" style="margin-top:10px;width:100%">إعادة ضبط المسابقة</button>
+      <p id="hostStatus" class="muted"></p>
+    </div>
+    <div class="panel">
+      <span class="pill" id="hostQCount">جاهز</span><span class="timer" id="hostTimer" style="float:left">--</span>
+      <div class="question" id="hostQuestion">ابدأ المسابقة لعرض السؤال الأول</div>
+      <div id="hostOptions" class="answers"></div>
+      <p id="correctAnswer" class="notice hidden"></p>
+    </div>
+    <div class="panel">
+      <h2>لوحة المتصدرين المباشرة</h2>
+      <table><thead><tr><th>الترتيب</th><th>الاسم</th><th>النقاط</th></tr></thead><tbody id="leaderboard"></tbody></table>
+    </div>
+  </section>
+</main>
+<footer>RAKTA • National Day Celebration 🇦🇪</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+// 1) ضعوا بيانات مشروع Firebase هنا بعد إنشائه.
+const firebaseConfig = {
+  apiKey: "AIzaSyAdmNlxaiS1jcRSkgxP3lPsh8Tru-XEbtc",
+  authDomain: "rakta-national-day-2026.firebaseapp.com",
+  databaseURL: "https://rakta-national-day-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "rakta-national-day-2026",
+  appId: "1:974803584945:web:8706d1f8d9b9fb26b15f90"
+};
+// غيّروا رمز المنظم قبل الفعالية. هذا قفل واجهة فقط وليس بديلاً عن صلاحيات Firebase.
+const HOST_PIN = "RAKTA2026";
+const ROOM = "rakta-national-day-2026";
+const QUESTIONS = [
+ {q:"في أي تاريخ تحتفل دولة الإمارات باليوم الوطني؟",a:["2 ديسمبر","1 ديسمبر","3 ديسمبر","30 نوفمبر"],c:0},
+ {q:"كم عدد الإمارات التي يتكون منها الاتحاد؟",a:["5","6","7","8"],c:2},
+ {q:"ما عاصمة دولة الإمارات؟",a:["دبي","أبوظبي","الشارقة","رأس الخيمة"],c:1},
+ {q:"من هو مؤسس دولة الإمارات؟",a:["الشيخ زايد بن سلطان آل نهيان","الشيخ راشد بن سعيد آل مكتوم","الشيخ خليفة بن زايد","الشيخ صقر بن محمد القاسمي"],c:0},
+ {q:"ما أعلى قمة جبلية في الإمارات؟",a:["جبل حفيت","جبل جيس","جبل مليحة","جبل الظنة"],c:1},
+ {q:"ما العملة الرسمية لدولة الإمارات؟",a:["الريال","الدينار","الدرهم","الدرهم الخليجي"],c:2},
+ {q:"ما اسم النشيد الوطني الإماراتي؟",a:["موطني","عيشي بلادي","بلادي بلادي","فخر الإمارات"],c:1},
+ {q:"في أي إمارة يقع جبل جيس؟",a:["الفجيرة","عجمان","رأس الخيمة","أم القيوين"],c:2},
+ {q:"ما اسم الشجرة الوطنية لدولة الإمارات؟",a:["الغاف","السدر","النخيل","السمر"],c:0},
+ {q:"ما اسم أول رائد فضاء إماراتي؟",a:["سلطان النيادي","هزاع المنصوري","محمد الملا","نورا المطروشي"],c:1},
+ {q:"ما ألوان علم دولة الإمارات؟",a:["أحمر وأخضر وأبيض وأسود","أحمر وأزرق وأبيض","أخضر وأصفر وأسود","أحمر وأبيض وأزرق"],c:0},
+ {q:"ما اسم المحطة النووية السلمية في منطقة الظفرة؟",a:["محطة براكة","محطة زايد","محطة الاتحاد","محطة ليوا"],c:0},
+ {q:"ما اسم الفن التقليدي الإماراتي المدرج في اليونسكو ويعتمد على التطريز؟",a:["التلي","العيالة","الرزفة","الندبة"],c:0},
+ {q:"ما الأداة التقليدية التي يُقدّم بها القهوة العربية؟",a:["المبخرة","الدلة","المنحاز","الرحى"],c:1},
+ {q:"ما اسم العرضة الشعبية الإماراتية المعروفة بالصفوف والطبول؟",a:["العيالة","التغرودة","الونة","النهمة"],c:0},
+ {q:"ما أكبر إمارة في دولة الإمارات من حيث المساحة؟",a:["دبي","أبوظبي","الشارقة","رأس الخيمة"],c:1},
+ {q:"ما اسم أول امرأة إماراتية تصل إلى الفضاء؟",a:["نورا المطروشي","سارة الأميري","ريم الهاشمي","مريم المنصوري"],c:0},
+ {q:"أي من هذه المدن تقع في إمارة رأس الخيمة؟",a:["خورفكان","دبا","الجزيرة الحمراء","حتا"],c:2},
+ {q:"ما اسم بطاقة الدفع المستخدمة في خدمات الحافلات في رأس الخيمة؟",a:["نول","صقر","حافلتي","مواصلاتي"],c:1},
+ {q:"ما المناسبة التي يحييها الإماراتيون في 30 نوفمبر؟",a:["يوم العلم","يوم الشهيد","اليوم الوطني","يوم الطفل"],c:1}
+];
+
+let db, uid=null, playerRef=null, hostMode=false, currentQ=-1, timerHandle=null, endAt=0, localAnswered=false;
+const $=id=>document.getElementById(id);
+const show=id=>$(id).classList.remove('hidden'), hide=id=>$(id).classList.add('hidden');
+const configured= firebaseConfig.apiKey!=="PASTE_API_KEY";
+if(location.search.includes("host=1")) show("hostLogin");
+
+if(configured){
+  firebase.initializeApp(firebaseConfig);
+  db=firebase.database();
+  firebase.auth().signInAnonymously().catch(e=>alert("تعذر الاتصال: "+e.message));
+  firebase.auth().onAuthStateChanged(user=>{if(user) uid=user.uid;});
+}
+function needConfig(){if(!configured){alert("يلزم أولاً إضافة إعدادات Firebase داخل ملف HTML. راجعوا خطوات الإعداد المرفقة.");return false}return true}
+$("joinBtn").onclick=async()=>{
+ if(!needConfig())return;
+ const name=$("playerName").value.trim(); if(!name){$("joinMsg").textContent="يرجى كتابة الاسم.";return}
+ if(!uid){$("joinMsg").textContent="جارٍ الاتصال، حاول مرة أخرى بعد لحظة.";return}
+ try{
+  await db.ref(`${ROOM}/players/${uid}`).set({name,score:0,joinedAt:firebase.database.ServerValue.TIMESTAMP});
+  playerRef=db.ref(`${ROOM}/players/${uid}`);
+  $("welcome").textContent="تم تسجيلك باسم: "+name;
+  hide("setup");show("waiting");listenGame();
+ }catch(e){$("joinMsg").textContent="تعذر التسجيل: "+e.message}
+};
+function listenGame(){
+ db.ref(`${ROOM}/game`).on("value",snap=>{
+  const g=snap.val(); if(!g||g.status==="waiting"){hide("play");show("waiting");return}
+  if(g.status==="question" && g.index!==undefined){renderPlayerQuestion(g);return}
+  if(g.status==="reveal"){hide("play");show("waiting");$("welcome").textContent="انتهى السؤال! انتظر السؤال التالي."; }
+  if(g.status==="finished"){hide("play");show("waiting");$("welcome").textContent="انتهت المسابقة! تابعوا لوحة النتائج على الشاشة الرئيسية."}
+ });
+}
+function renderPlayerQuestion(g){
+ show("play");hide("waiting");
+ if(currentQ!==g.index){currentQ=g.index;localAnswered=false}
+ const q=QUESTIONS[g.index];$("qCount").textContent=`السؤال ${g.index+1} من ${QUESTIONS.length}`;
+ $("playerQuestion").textContent=q.q;$("playerAnswers").innerHTML="";
+ q.a.forEach((a,i)=>{const b=document.createElement("button");b.className="answer";b.textContent=a;b.disabled=localAnswered;b.onclick=()=>sendAnswer(i,g.index,b);$("playerAnswers").appendChild(b)});
+ $("answerMsg").textContent=localAnswered?"تم استلام إجابتك.": "اختر إجابتك قبل انتهاء الوقت.";
+ updateTimer(g.endsAt,"playerTimer","playerBar");
+}
+async function sendAnswer(choice,index,btn){
+ if(localAnswered)return;localAnswered=true;
+ document.querySelectorAll("#playerAnswers button").forEach(b=>b.disabled=true);
+ try{await db.ref(`${ROOM}/answers/${index}/${uid}`).set({choice,at:firebase.database.ServerValue.TIMESTAMP});$("answerMsg").textContent="تم تسجيل إجابتك بنجاح ✓";}
+ catch(e){localAnswered=false;$("answerMsg").textContent="تعذر إرسال الإجابة، حاول مجدداً."}
+}
+function updateTimer(endsAt,label,bar){
+ clearInterval(timerHandle);
+ const tick=()=>{const left=Math.max(0,Math.ceil((endsAt-Date.now())/1000));$(label).textContent=left+" ث";if(bar)$(bar).style.width=(left/20*100)+"%";if(left<=0)clearInterval(timerHandle)};
+ tick();timerHandle=setInterval(tick,250);
+}
+$("hostLoginBtn").onclick=()=>{
+ if(!needConfig())return;
+ if($("hostPin").value!==HOST_PIN){$("hostMsg").textContent="رمز غير صحيح.";return}
+ if(!uid){$("hostMsg").textContent="انتظر الاتصال ثم حاول مرة أخرى.";return}
+ hostMode=true;hide("hostLogin");hide("setup");hide("waiting");show("host");initHost();
+};
+function initHost(){
+ db.ref(`${ROOM}/players`).on("value",s=>{const p=s.val()||{};$("playersCount").textContent=Object.keys(p).length+" مشارك";renderBoard(p)});
+ db.ref(`${ROOM}/game`).on("value",s=>{const g=s.val();if(!g)return;
+  if(g.index>=0&&g.index<QUESTIONS.length){const q=QUESTIONS[g.index];$("hostQCount").textContent=`السؤال ${g.index+1} من ${QUESTIONS.length}`;$("hostQuestion").textContent=q.q;$("hostOptions").innerHTML=q.a.map((x,i)=>`<div class="answer" style="padding:14px;border-radius:10px">${["أ","ب","ج","د"][i]}. ${x}</div>`).join("");$("correctAnswer").classList.toggle("hidden",g.status!=="reveal");$("correctAnswer").textContent="الإجابة الصحيحة: "+q.a[q.c];if(g.status==="question")updateTimer(g.endsAt,"hostTimer");}
+  $("hostStatus").textContent=g.status==="question"?"السؤال مفتوح للإجابة":g.status==="reveal"?"تم إظهار الإجابة":g.status==="finished"?"انتهت المسابقة":"جاهز";
+ });
+}
+function renderBoard(players){
+ const rows=Object.entries(players).map(([id,p])=>({id,name:p.name||"مشارك",score:p.score||0})).sort((a,b)=>b.score-a.score);
+ $("leaderboard").innerHTML=rows.slice(0,10).map((p,i)=>`<tr><td class="rank">${i+1}</td><td>${escapeHtml(p.name)}</td><td>${p.score}</td></tr>`).join("");
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("startBtn").onclick=async()=>{
+ const snap=await db.ref(`${ROOM}/game`).get();const old=snap.val();let next=old&&old.status==="reveal"?old.index+1:old&&old.status==="question"?old.index+1:0;
+ if(next>=QUESTIONS.length){await db.ref(`${ROOM}/game`).set({status:"finished",index:QUESTIONS.length});return}
+ currentQ=next;const endsAt=Date.now()+20000;
+ await db.ref(`${ROOM}/game`).set({status:"question",index:next,endsAt});
+ $("correctAnswer").classList.add("hidden");
+};
+$("revealBtn").onclick=async()=>{
+ const s=await db.ref(`${ROOM}/game`).get();const g=s.val();if(!g||g.status!=="question")return;
+ await scoreQuestion(g.index);await db.ref(`${ROOM}/game`).update({status:"reveal"});
+};
+async function scoreQuestion(index){
+ const [ansSnap,playersSnap]=await Promise.all([db.ref(`${ROOM}/answers/${index}`).get(),db.ref(`${ROOM}/players`).get()]);
+ const answers=ansSnap.val()||{},players=playersSnap.val()||{},q=QUESTIONS[index];
+ const correct=Object.entries(answers).filter(([id,a])=>a.choice===q.c).sort((x,y)=>(x[1].at||0)-(y[1].at||0));
+ const firstTime=correct.length?correct[0][1].at:0;
+ const updates={};
+ for(const [id,p] of Object.entries(players)){
+  const a=answers[id];if(a&&a.choice===q.c){const bonus=correct.length&&a.at===firstTime?50:Math.max(0,Math.round(30*(1-(a.at-firstTime)/20000)));updates[`${ROOM}/players/${id}/score`]=(p.score||0)+100+bonus;}
+ }
+ if(Object.keys(updates).length)await db.ref().update(updates);
+}
+$("resetBtn").onclick=async()=>{
+ if(!confirm("هل تريد إعادة ضبط جميع المشاركين والنقاط والإجابات؟"))return;
+ await db.ref(ROOM).set({game:{status:"waiting",index:-1},players:{},answers:{}});
+ currentQ=-1;$("hostQuestion").textContent="ابدأ المسابقة لعرض السؤال الأول";$("leaderboard").innerHTML="";
+};
+</script>
+</body>
+</html>
