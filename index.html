@@ -89,7 +89,7 @@ footer{text-align:center;color:var(--muted);padding:22px;font-size:12px}
 const firebaseConfig = {
   apiKey: "AIzaSyAdmNlxaiS1jcRSkgxP3lPsh8Tru-XEbtc",
   authDomain: "rakta-national-day-2026.firebaseapp.com",
-  databaseURL: "https://rakta-national-day-2026-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL: "https://rakta-national-day-2026-default-rtdb.asia-southeast1.firebasedatabase.app/",
   projectId: "rakta-national-day-2026",
   appId: "1:974803584945:web:8706d1f8d9b9fb26b15f90"
 };
@@ -128,7 +128,15 @@ if(location.search.includes("host=1")) show("hostLogin");
 if(configured){
   firebase.initializeApp(firebaseConfig);
   db=firebase.database();
-  firebase.auth().signInAnonymously().catch(e=>alert("تعذر الاتصال: "+e.message));
+  firebase.auth().signInAnonymously()
+.then(user => {
+    console.log("Firebase Connected:", user.user.uid);
+    alert("Firebase Connected Successfully!");
+})
+.catch(error => {
+    console.error(error);
+    alert("Firebase Error: " + error.code + " - " + error.message);
+});
   firebase.auth().onAuthStateChanged(user=>{if(user) uid=user.uid;});
 }
 function needConfig(){if(!configured){alert("يلزم أولاً إضافة إعدادات Firebase داخل ملف HTML. راجعوا خطوات الإعداد المرفقة.");return false}return true}
